@@ -4,6 +4,7 @@ import plotly.express as px
 import awswrangler as wr
 from datetime import datetime, timedelta
 from dataclasses import dataclass
+import boto3
 
 # --------------------------------------------------
 # 設定・定数
@@ -58,7 +59,14 @@ def load_data_athena(category: str, config: Config, start_date: str = None, end_
     FROM {config.athena_database}.{table}
     {date_filter}
     """
-    df = wr.athena.read_sql_query(query, database=config.athena_database, s3_output=config.athena_output_s3)
+    session = boto3.Session(region_name="ap-northeast-1")
+    df = wr.athena.read_sql_query(
+        query, 
+        database=config.athena_database, 
+        s3_output=config.athena_output_s3,
+        boto3_session=session
+    )
+    # df = wr.athena.read_sql_query(query, database=config.athena_database, s3_output=config.athena_output_s3)
     if not df.empty:
         df["date"] = pd.to_datetime(df["date"])
         df.sort_values("date", inplace=True)
