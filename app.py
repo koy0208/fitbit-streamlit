@@ -11,6 +11,9 @@ import boto3
 # --------------------------------------------------
 @dataclass
 class Config:
+    aws_access_key_id: str = ""        # AWSアクセスキーID
+    aws_secret_access_key: str = ""    # AWSシークレットアクセスキー
+    aws_region: str = ""               # AWSリージョン
     athena_database: str = "fitbit"               # Athenaのデータベース名
     athena_output_s3: str = "s3://fitbit-dashboard" # Athenaクエリ結果の出力先S3バケット
     default_days: int = 60                          # デフォルトの読み込み日数
@@ -19,6 +22,9 @@ class Config:
 
 def init_config() -> Config:
     return Config(
+        aws_access_key_id=st.secrets["aws_credentials"]["aws_access_key_id"],
+        aws_secret_access_key=st.secrets["aws_credentials"]["aws_secret_access_key"],
+        aws_region=st.secrets["aws_credentials"]["aws_region"],
         athena_database="fitbit",
         athena_output_s3="s3://fitbit-dashboard",
         default_days=60,
@@ -59,7 +65,11 @@ def load_data_athena(category: str, config: Config, start_date: str = None, end_
     FROM {config.athena_database}.{table}
     {date_filter}
     """
-    session = boto3.Session(region_name="ap-northeast-1")
+    session = boto3.Session(
+        aws_access_key_id=config.aws_access_key_id,
+        aws_secret_access_key=config.aws_secret_access_key,
+        region_name=config.aws_region,
+        )
     df = wr.athena.read_sql_query(
         query, 
         database=config.athena_database, 
