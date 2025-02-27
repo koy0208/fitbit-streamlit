@@ -1,5 +1,8 @@
 fitbit-env
+*terraform*
+*.hcl
 *.toml
+*python-version
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
