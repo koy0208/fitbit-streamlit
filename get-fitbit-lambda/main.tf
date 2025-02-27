@@ -106,23 +106,23 @@ resource "aws_cloudwatch_event_rule" "scheduled_rule_jst_3am" {
   #    18:00 UTC = JST 03:00
 }
 
-# # ---------------------------------------------------------------------
-# # EventBridge Target: 上記 Rule が発火したときに呼び出す Lambda
-# # ---------------------------------------------------------------------
-# resource "aws_cloudwatch_event_target" "scheduled_rule_jst_3am_target" {
-#   rule      = aws_cloudwatch_event_rule.scheduled_rule_jst_3am.name
-#   arn       = aws_lambda_function.get_fitbit_api.arn
-#   # 任意で入力 (引数) を設定したい場合は input or input_path / input_transformer を指定
-#   # input = jsonencode({ example = "Hello" })
-# }
+# ---------------------------------------------------------------------
+# EventBridge Target: 上記 Rule が発火したときに呼び出す Lambda
+# ---------------------------------------------------------------------
+resource "aws_cloudwatch_event_target" "scheduled_rule_jst_3am_target" {
+  rule      = aws_cloudwatch_event_rule.scheduled_rule_jst_3am.name
+  arn       = aws_lambda_function.get_fitbit_api.arn
+  # 任意で入力 (引数) を設定したい場合は input or input_path / input_transformer を指定
+  # input = jsonencode({ example = "Hello" })
+}
 
-# # ---------------------------------------------------------------------
-# # Lambda 側の Invoke 権限 (EventBridge から呼び出しを許可する)
-# # ---------------------------------------------------------------------
-# resource "aws_lambda_permission" "allow_eventbridge_invoke" {
-#   statement_id  = "AllowEventBridgeToInvokeLambda"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.get_fitbit_api.function_name
-#   principal     = "events.amazonaws.com"
-#   source_arn    = aws_cloudwatch_event_rule.scheduled_rule_jst_3am.arn
-# }
+# ---------------------------------------------------------------------
+# Lambda 側の Invoke 権限 (EventBridge から呼び出しを許可する)
+# ---------------------------------------------------------------------
+resource "aws_lambda_permission" "allow_eventbridge_invoke" {
+  statement_id  = "AllowEventBridgeToInvokeLambda"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_fitbit_api.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.scheduled_rule_jst_3am.arn
+}

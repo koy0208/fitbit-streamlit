@@ -142,16 +142,7 @@ selected_start, selected_end = date_range
 # 2列に分割（カテゴリが偶数の場合）
 graph_cols = st.columns(2)
 for idx, category in enumerate(categories):
-    # ユーザーが選択した範囲がデフォルトの範囲外の場合は再取得
-    if selected_start < default_start or selected_end > default_end:
-        df = load_data_athena(
-            category,
-            config,
-            start_date=selected_start.strftime("%Y-%m-%d"),
-            end_date=selected_end.strftime("%Y-%m-%d")
-        )
-    else:
-        df = filter_data_by_date(data[category], selected_start, selected_end)
+    df = filter_data_by_date(data[category], selected_start, selected_end)
     
     # 2列レイアウトの場合、左右に順次配置
     with graph_cols[idx % 2]:

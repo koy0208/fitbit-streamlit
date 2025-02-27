@@ -167,6 +167,7 @@ def process_activity_data(data):
         }
     )
     return df
+
 def process_low_intensity_data(heart_data):
     """
     5分ごとの心拍数データから、閾値（例: 150bpm）以上の時間を集計する。
@@ -241,7 +242,6 @@ def handler(event, context):
     target_date = (datetime.now(pytz.timezone('Asia/Tokyo')) - timedelta(days=1)).strftime("%Y-%m-%d")
     
     # 1. 睡眠データ取得
-    print(f"Processing day: {target_date}")
     sleep_endpoint = f"/1.2/user/-/sleep/date/{target_date}/{target_date}.json"
     sleep_data = fetch_fitbit_data(sleep_endpoint, access_token)
     sleep_df = process_sleep_data(sleep_data)
@@ -270,17 +270,11 @@ def handler(event, context):
     )
 
     # 3. 低強度運動データ（心拍）取得
-    tmp_df = []
-    for i in range(138, 250):
-        target_date = (datetime.now(pytz.timezone('Asia/Tokyo')) - timedelta(days=i)).strftime("%Y-%m-%d")
-        print(f"{i} Processing day: {target_date}")
-        heart_endpoint = (
-            f"/1/user/-/activities/heart/date/{target_date}/{target_date}/5min.json"
-        )
-        heart_data = fetch_fitbit_data(heart_endpoint, access_token)
-        low_intensity_df = process_low_intensity_data(heart_data)
-        tmp_df.append(low_intensity_df)
-    low_intensity_df = pd.concat(tmp_df)
+    heart_endpoint = (
+        f"/1/user/-/activities/heart/date/{target_date}/{target_date}/5min.json"
+    )
+    heart_data = fetch_fitbit_data(heart_endpoint, access_token)
+    low_intensity_df = process_low_intensity_data(heart_data)
     heart_key = f"data/low_intensity/low_intensity.parquet"
     merge_and_upload_to_s3(low_intensity_df, bucket="fitbit-dashboard", key=heart_key)
     return {
@@ -316,3 +310,16 @@ def handler(event, context):
 # merge_and_upload_to_s3(
 #     activity_df, bucket="fitbit-dashboard", key=activity_key
 # )
+
+# # 3. 低強度運動データ（心拍）取得
+# tmp_df = []
+# for i in range(138, 250):
+#     target_date = (datetime.now(pytz.timezone('Asia/Tokyo')) - timedelta(days=i)).strftime("%Y-%m-%d")
+#     print(f"{i} Processing day: {target_date}")
+#     heart_endpoint = (
+#         f"/1/user/-/activities/heart/date/{target_date}/{target_date}/5min.json"
+#     )
+#     heart_data = fetch_fitbit_data(heart_endpoint, access_token)
+#     low_intensity_df = process_low_intensity_data(heart_data)
+#     tmp_df.append(low_intensity_df)
+# low_intensity_df = pd.concat(tmp_df)
