@@ -32,6 +32,10 @@ resource "aws_iam_role" "lambda_execution_role" {
   assume_role_policy = data.aws_iam_policy_document.lambda_trust_policy.json
 }
 
+data "aws_secretsmanager_secret" "fitbit_secret" {
+  name = "prod/dashboard/fitbit"
+}
+
 # Secrets Manager への getSecretValue が必要
 data "aws_iam_policy_document" "lambda_policy" {
   statement {
@@ -47,7 +51,7 @@ data "aws_iam_policy_document" "lambda_policy" {
         "secretsmanager:UpdateSecret"
         ]
     resources = [
-      "arn:aws:secretsmanager:ap-northeast-1:060795942826:secret:prod/dashboard/fitbit-zSVnCF"
+      data.aws_secretsmanager_secret.fitbit_secret.arn
     ]
   }
 
