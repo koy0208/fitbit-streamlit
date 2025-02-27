@@ -49,6 +49,7 @@ def calculate_weekly_average(df: pd.DataFrame, metric: str) -> float:
     """直近1週間の平均値を計算します。"""
     today = datetime.now().date()
     start_date = today - timedelta(days=7)
+    df = df.groupby("date")[metric].sum().reset_index()
     recent_data = df[(df["date"].dt.date >= start_date) & (df["date"].dt.date <= today)]
     avg = recent_data[metric].mean()
     return avg if not pd.isna(avg) else 0.0
@@ -133,7 +134,6 @@ for i, category in enumerate(categories):
             label=f"{category.capitalize()}の平均",
             value=f"{avg_metric:.1f} {config.unit_columns[category]}"
         )
-
 # 日付範囲の選択
 date_range = st.date_input("日付範囲を選択", value=(default_start, default_end))
 selected_start, selected_end = date_range
