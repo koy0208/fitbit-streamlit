@@ -1,5 +1,6 @@
-# Fitbit Streamlit Webアプリ
 （READMEは一部生成AIによって、作成されています）
+
+# Fitbit Streamlit Webアプリ
 Fitbit のデータを可視化するアプリです。フロントエンドは Streamlit を用いて実装され、Athena から boto3 経由で抽出されたデータを元に、各種データの可視化を行います。データ取得処理は Athena クエリで行われ、データは、lambdaによって毎日S3へアップロードされます。
 
 ## アーキテクチャ全体の概要
