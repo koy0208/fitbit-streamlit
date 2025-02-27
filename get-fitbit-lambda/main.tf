@@ -15,7 +15,7 @@ resource "aws_ecr_repository" "lambda_repo" {
 # (任意) ECR のライフサイクルポリシーやイミュータブルタグ設定など追加可
 
 #######################################
-# IAM ロール (Lambda 実行ロール)
+# IAM ロール (Lambda 実行ロールとStreamlitの実行ユーザー)
 #######################################
 data "aws_iam_policy_document" "lambda_trust_policy" {
   statement {
@@ -73,6 +73,62 @@ resource "aws_iam_policy" "lambda_logging_secrets_policy" {
 resource "aws_iam_role_policy_attachment" "lambda_attach_policy" {
   role       = aws_iam_role.lambda_execution_role.name
   policy_arn = aws_iam_policy.lambda_logging_secrets_policy.arn
+}
+
+# Streamlit 用の IAM ユーザーを作成
+data "aws_iam_policy_document" "streamlit_athena_policy" {
+  statement {
+    effect    = "Allow"
+    actions   = [
+      "athena:StartQueryExecution",
+      "athena:GetQueryResults",
+      "athena:GetQueryExecution",
+      "athena:StopQueryExecution",
+      "athena:GetWorkGroup"
+    ]
+    resources = ["*"]
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::fitbit-dashboard"]
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["s3:GetObject", "s3:PutObject"]
+    resources = ["arn:aws:s3:::fitbit-dashboard/*"]
+  }
+
+  # Glue の アクションを許可するステートメントを追加
+  statement {
+    effect    = "Allow"
+    actions   = ["glue:*"]
+    resources = ["*"]
+  }
+
+  # バケットの作成とロケーション取得を許可（リソースは CreateBucket の場合 "*" 固定）
+  statement {
+    effect  = "Allow"
+    actions = [
+      "s3:CreateBucket",
+      "s3:GetBucketLocation"
+    ]
+    resources = ["*"]
+  }
+}
+
+# Streamlit 用の IAM ユーザーを作成
+resource "aws_iam_user" "streamlit_athena_user" {
+  name = "streamlit-athena-user"
+}
+
+# 作成した IAM ユーザーにポリシーをアタッチ
+resource "aws_iam_user_policy" "streamlit_athena_policy_attachment" {
+  name   = "StreamlitAthenaPolicy"
+  user   = aws_iam_user.streamlit_athena_user.name
+  policy = data.aws_iam_policy_document.streamlit_athena_policy.json
 }
 
 #######################################
