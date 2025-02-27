@@ -15,7 +15,7 @@ class Config:
     aws_secret_access_key: str = ""    # AWSシークレットアクセスキー
     aws_region: str = ""               # AWSリージョン
     athena_database: str = "fitbit"               # Athenaのデータベース名
-    athena_output_s3: str = "s3://fitbit-dashboard" # Athenaクエリ結果の出力先S3バケット
+    athena_output_s3: str = "s3://fitbit-dashboard/athena-logs" # Athenaクエリ結果の出力先S3バケット
     default_days: int = 60                          # デフォルトの読み込み日数
     metric_columns: dict = None                     # 各カテゴリの指標列名
     unit_columns: dict = None                       # 各カテゴリの単位
@@ -26,17 +26,19 @@ def init_config() -> Config:
         aws_secret_access_key=st.secrets["aws_credentials"]["aws_secret_access_key"],
         aws_region=st.secrets["aws_credentials"]["aws_region"],
         athena_database="fitbit",
-        athena_output_s3="s3://fitbit-dashboard",
+        athena_output_s3="s3://fitbit-dashboard/athena-logs",
         default_days=60,
         metric_columns={
             "sleep": "total_sleep_hour",
             "steps": "steps",
-            "high_intensity": "high_intensity_minutes"
+            "activity": "active_zone_minutes",
+            "low_intensity": "low_intensity_minutes"
         },
         unit_columns={
             "sleep": "hour",
             "steps": "steps",
-            "high_intensity": "min"
+            "activity": "min",
+            "low_intensity": "min"
         }
     )
 
@@ -104,22 +106,24 @@ def plot_category_data(category: str, df: pd.DataFrame, config: Config, window: 
 # --------------------------------------------------
 # メイン処理
 # --------------------------------------------------
+# ページレイアウトをwideモードに設定
+st.set_page_config(layout="wide", page_title="My Activity Dashboard")
 
 # 設定の初期化とタイトル表示
 config = init_config()
-st.title("My Activity")
+st.title("My Activity Dashboard")
 
 # デフォルトの日付範囲（直近 default_days 日）
 today = datetime.now().date()
 default_start = today - timedelta(days=config.default_days)
 default_end = today - timedelta(days=1)
 
-categories = ["sleep", "steps", "high_intensity"]
+categories = ["sleep", "steps", "low_intensity", "activity"]
 
 # Athenaから全データをロード（後でフィルタして利用）
 data = {category: load_data_athena(category, config) for category in categories}
 
-# 直近1週間の平均を数値カードで表示
+# 直近1週間の平均を数値カードで表示（横並び）
 st.header("直近1週間の平均")
 cols = st.columns(len(categories))
 for i, category in enumerate(categories):
@@ -131,13 +135,13 @@ for i, category in enumerate(categories):
         )
 
 # 日付範囲の選択
-st.header("日付範囲の選択")
 date_range = st.date_input("日付範囲を選択", value=(default_start, default_end))
 selected_start, selected_end = date_range
 
-# カテゴリ毎にグラフを表示
-st.header("時系列推移")
-for category in categories:
+# カテゴリ毎のグラフ表示（2列レイアウト）
+# 2列に分割（カテゴリが偶数の場合）
+graph_cols = st.columns(2)
+for idx, category in enumerate(categories):
     # ユーザーが選択した範囲がデフォルトの範囲外の場合は再取得
     if selected_start < default_start or selected_end > default_end:
         df = load_data_athena(
@@ -149,4 +153,7 @@ for category in categories:
     else:
         df = filter_data_by_date(data[category], selected_start, selected_end)
     
-    plot_category_data(category, df, config, window=30)
+    # 2列レイアウトの場合、左右に順次配置
+    with graph_cols[idx % 2]:
+        st.subheader(f"{category.capitalize()}の推移")
+        plot_category_data(category, df, config, window=30)
