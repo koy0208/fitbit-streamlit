@@ -82,3 +82,7 @@ fitbit-streamlit/
 
 データ抽出時に、Athena が「今日はどんなデータが来るかな？」とワクワクしているかもしれません。ログに目を通しながら、データの行間に隠れたユーモアも見逃さないでください！
 
+
+## 参考
+
+[紹介ブログ](https://www.medi-08-data-06.work/entry/fitbit-dashboard)
